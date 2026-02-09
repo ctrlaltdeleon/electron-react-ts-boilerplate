@@ -1,5 +1,5 @@
-# Ignore node modules and build outputs
-node_modules/
+# Keeping node_modules for now due to development needs, but it can be uncommented when ready for production
+# node_modules/ 
 dist/
 .vscode/
 .DS_Store
