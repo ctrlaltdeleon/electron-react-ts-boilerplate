@@ -1,5 +1,5 @@
-# Keeping node_modules for now due to development needs, but it can be uncommented when ready for production
-# node_modules/ 
+# .gitignore blocks files and directories that should not be tracked by Git. This includes dependencies, build outputs, and environment files.
+node_modules/ 
 dist/
 .vscode/
 .DS_Store

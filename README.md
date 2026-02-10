@@ -1,106 +1,83 @@
-# Electron + React + TypeScript (concise)
+# Electron + React + TypeScript (Electron 26)
 
-A compact starter for an Electron app with a Vite-powered React renderer and TypeScript for both renderer and Electron code.
+A compact Electron app with a Vite-powered React renderer and TypeScript on both sides.
 
-Quick overview
+## Requirements
 
-- Renderer: React + Vite (dev server, ES modules)
-- Main: Electron main process (CommonJS output)
-- Preload: Secure bridge exposing minimal APIs to the renderer (in src/electron/preload.ts)
+- Node 18 (see `.nvmrc`)
+- npm
 
-What changed / notes
+## Quick start (online)
 
-- Renderer built to `dist/renderer`; Electron main/preload compiled to `dist/`.
-- `index.html` is the renderer entry and mounts React into `#root`.
-- `tsconfig.json` is the shared config; `tsconfig.electron.json` overrides for main/preload.
-- Vite `base: "./"` keeps built files relative for packaged apps.
-- CSP is present in `index.html` — tighten for production (avoid `unsafe-inline`).
+```bash
+npm ci
+npm run dev
+```
 
-Essential scripts
+## Essential scripts
 
-- `npm run dev` — starts Vite, tsc watch for Electron, and Electron (development)
+- `npm run dev` — Vite dev server + TypeScript watch for Electron + Electron app
 - `npm run build` — builds renderer and compiles Electron code
-- `npm run dist:linux` — builds and packages Linux artifacts (AppImage, deb)
+- `npm run dist:linux` — Linux packaging (AppImage, deb)
 - `npm run dist:win` / `npm run dist:mac` — platform-specific packaging
+- `npm run test` — Vitest (dev mode)
+- `npm run test:run` — Vitest (CI mode)
 
-Project layout (important parts)
+## Offline workflow (Ubuntu 22)
+
+These scripts create and use local caches for npm, Electron, and electron-builder.
+
+### 1) On an online Ubuntu 22 machine
+
+```bash
+./make-offline-ready.sh --dist-linux
+```
+
+This creates a tarball like:
 
 ```
-.offline-cache/  # Dependencies to be ready from online to offline via cache
-dist/            # Build outputs (generated)
-draft/           # Old foundation for this project
-node_modules/    # Dependencies
-release/         # App to be served on any OS (if the build exists)
-scripts/         # Scripts that create and use the .offline-cache/
+electron-react-ts-offline-YYYYMMDD-HHMMSS-gitsha.tar.gz
+```
+
+### 2) Transfer the tarball
+
+Copy the tarball to the offline Ubuntu 22 machine and extract it.
+
+### 3) On the offline machine
+
+```bash
+./use-offline-ready.sh
+npm ci --offline --prefer-offline --no-audit
+npm run dev
+```
+
+Notes:
+
+- Use the same OS and CPU architecture as the online machine.
+- The caches live in `.npm-cache/`, `.electron-cache/`, `.electron-builder-cache/`.
+
+## Project layout (key parts)
+
+```
+dist/                # Build outputs (generated)
+release/             # Packaged outputs (generated)
 src/
-  renderer/      # React app (entry: src/renderer/main.tsx)
-  electron/      # Electron main process + preload (electron.ts, preload.ts)
-index.html       # Renderer HTML; mounts to #root and loads /src/renderer/main.tsx
-package.json     # Scripts, deps, and electron-builder config
-release/         # Packaged outputs (generated)
-tsconfig.electron.json # Electron-specific config (CommonJS, outDir: dist)
-tsconfig.json    # Shared TypeScript config
-vite.config.ts   # Vite config (renderer)
+  renderer/          # React app (entry: src/renderer/main.tsx)
+  electron/          # Electron main + preload
+index.html           # Renderer HTML (mounts React into #root)
+vite.config.mts      # Vite config (ESM)
+vitest.config.mts    # Vitest config (jsdom)
+tsconfig.json        # Shared TS config
+tsconfig.electron.json # Electron TS config (CommonJS output)
 ```
 
-Security & best practices (short)
+## Notes
 
-- Use `contextIsolation: true` and `nodeIntegration: false` in the main process.
-- Keep native/privileged APIs inside `preload` and expose minimal surface area.
-- Audit CSP in `index.html` and remove `unsafe-*` entries for production builds.
+- The Vite config is ESM (`vite.config.mts`) because `@vitejs/plugin-react` is ESM-only.
+- `vitest.config.mts` uses `jsdom` so React tests can access `document`.
+- `index.html` includes a CSP; tighten it for production (avoid `unsafe-*`).
 
-Dev tips
+## Security reminders
 
-- If dev works but packaged app is blank, check `index.html` paths, CSP, and preload API availability.
-- When switching OS/machine, delete `node_modules` and re-run `npm install`.
-- Use `npm audit` and `npm outdated` regularly.
-
-Offline Development
-
-If you need to work on an offline machine (no internet), use the offline cache scripts:
-
-**Step 1: Prepare caches (on a machine WITH internet, same OS as target)**
-
-```bash
-# On Linux (to use on an offline Linux machine):
-./scripts/prepare-offline.sh --dist-linux --clean
-
-# On Windows (to use on an offline Windows machine):
-./scripts/prepare-offline.sh --dist-win --clean
-
-# On macOS (to use on an offline macOS machine):
-./scripts/prepare-offline.sh --dist-mac --clean
-```
-
-This downloads npm packages, Electron, and build tools into `.offline-cache/` (included in repo).
-
-**Step 2: Transfer to offline machine**
-
-Copy the entire repo (with `.offline-cache/`) to your offline machine.
-
-**Step 3: Use offline cache**
-
-On the offline machine, wrap all commands with the cache script:
-
-```bash
-./scripts/use-offline-cache.sh npm ci              # Install deps
-./scripts/use-offline-cache.sh npm run dev         # Start dev
-./scripts/use-offline-cache.sh npm run build       # Build for prod
-./scripts/use-offline-cache.sh npm run dist:linux  # Package (if on Linux)
-```
-
-⚠️ **Critical:** Only use on the same OS where you prepared the caches. `.offline-cache/` contains platform-specific binaries.
-
-Further improvements (suggested next steps)
-
-- Add ESLint + Prettier and pre-commit hooks.
-- Add CI workflow to lint, test, and build artifacts.
-- Consider `dependabot` or `renovate` for automated dependency updates.
-
-Contact / extend
-
-This README is intentionally short. If you want, I can:
-
-- Annotate `package.json` scripts and `build` config inline
-- Add a small CI workflow
-- Add ESLint and Husky scaffolding
+- Keep `contextIsolation: true` and `nodeIntegration: false`.
+- Expose minimal APIs through `preload` only.

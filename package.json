@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Electron + React + TypeScript + electron-builder boilerplate",
+  "author": "Example <example@example.com>",
   "engines": {
     "node": "18.x"
   },
