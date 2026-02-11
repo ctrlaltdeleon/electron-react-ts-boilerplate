@@ -165,3 +165,11 @@ project-root/
 ## Want to see what is in Nexus?
 
 `npm view socket.io versions --json`
+
+## Any future changes to the repo due to git lfs, other cloned repos must do this
+
+```
+git fetch --all
+git reset --hard origin/main
+git lfs pull
+```
